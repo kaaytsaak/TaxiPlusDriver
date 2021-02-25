@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "723818063507",
+    "project_id": "silken-facet-140002",
+    "storage_bucket": "silken-facet-140002.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:723818063507:android:3aa048b19aac2afdee4f66",
+        "android_client_info": {
+          "package_name": "com.netsec.taxiplusdriver"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "723818063507-hea6dp9h9ftqdet2uktbson7f1vjqt89.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.netsec.taxiplusdriver",
+            "certificate_hash": "f7efe847230c381add426d64fa043c504c2f7f25"
+          }
+        },
+        {
+          "client_id": "723818063507-m9cfsmr4simraj4c4a50439rrf1jfm54.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUW4wV8gBfcMfr1CQLb5CjqAF0h52XdCI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "723818063507-m9cfsmr4simraj4c4a50439rrf1jfm54.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

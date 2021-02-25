@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Pruebas COVID</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="texto1">Telefono</string>
+    <string name="texto2">PIN</string>
+    <string name="texto3">acceder</string>
+    <string name="texto4">olvide mi contrasena</string>
+    <string name="texto5">No tienes una cuenta? \n Con tu cuenta podras utilizar todas las funciones de solidary y Registrarse Gratis</string>
+    <string name="texto6">REGISTRARSE</string>
+    <string name="texto7">nombre de jugador</string>>
+    <string name="texto8">Nombre completo</string>>
+    <string name="texto9">puntuacion</string>>
+    <string name="texto10">region</string>>
+
+</resources>
