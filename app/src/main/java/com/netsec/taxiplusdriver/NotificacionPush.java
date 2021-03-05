@@ -87,7 +87,12 @@ public class NotificacionPush extends FirebaseMessagingService{
             Log.e("firePartes",partesSolicitud[1]);
             destino.putExtra("id_viaje",partesSolicitud[1]);
             editor.putString("id",partesSolicitud[1]);
-            editor.putString("estado","solicitado");
+
+            if (cuerpo.contains("USUARIO")){
+                editor.putString("estado","solicitado_usuario");
+            }else{
+                editor.putString("estado","solicitado");
+            }
             editor.apply();
         }
 

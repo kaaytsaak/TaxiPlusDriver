@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Pruebas COVID</string>
+    <string name="app_name">TaxiplusDriver</string>
     <string name="title_activity_maps">Map</string>
     <string name="texto1">Telefono</string>
     <string name="texto2">PIN</string>

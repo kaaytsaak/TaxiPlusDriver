@@ -20,13 +20,14 @@
     <application
         android:allowBackup="false"
         android:hardwareAccelerated="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/app"
         android:label="@string/app_name"
         android:largeHeap="true"
-        android:roundIcon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/app"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
+        <activity android:name=".ViajeUsuario"></activity>
         <activity android:name=".Concluido" />
         <activity android:name=".Historial" />
         <activity android:name=".Viaje" />
@@ -65,7 +66,13 @@
 
         <activity
             android:name=".MapsFuncDriver"
-            android:label="@string/title_activity_maps" />
+            android:label="@string/title_activity_maps">
+            <intent-filter>
+                <action android:name="VIAJE" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

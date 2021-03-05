@@ -219,7 +219,7 @@ public class Login extends AppCompatActivity{
 
                 HashMap<String,String> map = new HashMap<>();
                 map.put("android_id",android_id);
-                map.put("telefono","0101010101");
+                map.put("telefono",intel);
                 map.put("password",inpin);
                 map.put("firecode",firecode);
 

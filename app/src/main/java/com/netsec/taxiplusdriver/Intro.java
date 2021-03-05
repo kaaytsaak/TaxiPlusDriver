@@ -53,8 +53,8 @@ public class Intro extends AppCompatActivity {
             public void run() {
                 String sesion = preferencias.getString("id_sesion"," ");
                 if (!sesion.trim().equals("")){
-                    //Intent pantallaso = new Intent(Intro.this,MapsFuncDriver.class);
-                    Intent pantallaso = new Intent(Intro.this,Login.class);
+                    Intent pantallaso = new Intent(Intro.this,MapsFuncDriver.class);
+                    //Intent pantallaso = new Intent(Intro.this,Login.class);
                     startActivity(pantallaso);
                 }
                 else{

@@ -20,6 +20,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -29,8 +30,10 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -89,16 +92,23 @@ public class MapsFuncDriver extends FragmentActivity implements OnMapReadyCallba
     private SegundoPlanoViajeId segundoPlanoViajeId;
     private static final String SERVIDOR_CONTROLADOR = new Servidor().servidor;
     private String id_sesion,android_id,solicitud_viaje,id_usuario,estado_viaje,tiempo_actualizacion,ver_ruta,id_viaje,pasajero1,pasajero2,pasajero3,pasajero4;
-    private ImageView btnConductor,btnHistorial;
-    private LinearLayout portadaEspera,capaCerrar;
-    private ConstraintLayout capaSolicitud,capaDestino,capaLlegada,capaViaje,alerta,alertaPasajero;
-    private TextView tvEmpresa, tvRuta,labelRuta,mensaje,mensajePasajeros;
+    private ImageView btnConductor,btnHistorial,imgViaje;
+    private LinearLayout portadaEspera,capaCerrar,capaViajeCurso;
+    private ConstraintLayout capaSolicitud,capaDestino,capaLlegada,capaViaje,alerta,alertaPasajero,capaSolicitudUsuario;
+    private TextView tvEmpresa, tvRuta,labelRuta,mensaje,mensajePasajeros,tvSwitch1,tvSwitch2,puntoPartidaUsuario,puntoLlegadaUsuario,costoTipoUsuario,puntoPartidaViaje,puntoLlegadaViaje;
     private Button btnAceptar, btnRechazar,btnCancelar,btnSeguir,btnCancelarViaje,btnCancelarDos,btnCancelarTres,btnComenzarViaje,btnCompletado1,btnCompletado2,btnCompletado3,btnCompletado4,btnSiPAsajero,btnNoPasajero;
     private SegundoPlanoParametros  segundoPlanoParametros;
     private LocationManager locationManager;
-    private String strRuta, strLat, strLong, strEmpresa, strEstado;
+    private String strRuta, strLat, strLong, strEmpresa, strEstado, servicio_ejecutivo, servicio_usuarios;
     private SegundoPlanoCancelar segundoPlanoCancelar;
     private int completado = 1;
+    private Switch switchUsuario, switchEjecutivo;
+    private String tipo_cambio, estado_cambio;
+    private SegundoPlanoCambiarEstado segundoPlanoCambiarEstado;
+    private SegundoPlanoSetearPreferencias segundoPlanoSetearPreferencias;
+    private SegundoPlanoViajeIdUsuario segundoPlanoViajeIdUsuario;
+    private Button btnAceptarViajeUsuario, btnRechazarViajeUsuario;
+    private float latInicio,lngInicio,latFinal,lngFinal;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -111,7 +121,10 @@ public class MapsFuncDriver extends FragmentActivity implements OnMapReadyCallba
 
         Intent intent = getIntent();
         solicitud_viaje=intent.getStringExtra("id_viaje");
-        //Log.e("id_solicitud","  -- "+solicitud_viaje);
+
+        String intentEstado=intent.getStringExtra("estado");
+
+        Log.e("id_solicitud","  -- "+solicitud_viaje);
         activity =this;
         // Creamos espacio en memoria para shared preferences
         sharedPreferences = getSharedPreferences("DatosConductor", context.MODE_PRIVATE);
@@ -122,12 +135,19 @@ public class MapsFuncDriver extends FragmentActivity implements OnMapReadyCallba
 
         estado_viaje=preferencias.getString("estado","inactivo");
 
+        if (intentEstado!=null){
+            estado_viaje=intentEstado;
+        }
+
         tiempo_actualizacion=datosViaje.getString("tiempo_actualizacion","20000");
         ver_ruta=datosViaje.getString("ver_ruta","1");
 
         id_usuario=preferencias.getString("id"," ");
         id_sesion=preferencias.getString("id_sesion"," ");
         android_id=preferencias.getString("android_id"," ");
+
+        servicio_ejecutivo=preferencias.getString("servicio_ejecutivo","si");
+        servicio_usuarios=preferencias.getString("servicio_usuarios","si");
 
         segundoPlanoParametros=new SegundoPlanoParametros();
         segundoPlanoParametros.execute();
@@ -144,9 +164,15 @@ public class MapsFuncDriver extends FragmentActivity implements OnMapReadyCallba
         alerta=findViewById(R.id.alerta);
         alertaPasajero=findViewById(R.id.alertaPasajero);
 
+        capaSolicitudUsuario=findViewById(R.id.capaSolicitudUsuario);
+        capaViajeCurso=findViewById(R.id.capaViajeCurso);
+
         tvEmpresa=findViewById(R.id.puntoPartida);
         tvRuta=findViewById(R.id.ruta);
         labelRuta=findViewById(R.id.labelRuta);
+
+        puntoLlegadaViaje=findViewById(R.id.puntoLlegadaViaje);
+        puntoPartidaViaje=findViewById(R.id.puntoPartidaViaje);
 
         btnAceptar=findViewById(R.id.btnAceptar);
         btnRechazar=findViewById(R.id.btnRechazar);
@@ -164,6 +190,20 @@ public class MapsFuncDriver extends FragmentActivity implements OnMapReadyCallba
         btnCompletado2=findViewById(R.id.btnCompletado2);
         btnCompletado3=findViewById(R.id.btnCompletado3);
         btnCompletado4=findViewById(R.id.btnCompletado4);
+
+        switchUsuario=findViewById(R.id.switchUsuarios);
+        switchEjecutivo=findViewById(R.id.switchEjecutivo);
+        tvSwitch1=findViewById(R.id.tvSwitch1);
+        tvSwitch2=findViewById(R.id.tvSwitch2);
+
+        puntoPartidaUsuario=findViewById(R.id.puntoPartidaUsuario);
+        puntoLlegadaUsuario=findViewById(R.id.puntoLlegadaUsuario);
+        costoTipoUsuario=findViewById(R.id.costo_tipo);
+
+        btnAceptarViajeUsuario=findViewById(R.id.btnAceptarUsuario);
+        btnRechazarViajeUsuario=findViewById(R.id.btnRechazarUsuario);
+
+        imgViaje=findViewById(R.id.imgViaje);
 
         mensaje=findViewById(R.id.mensaje);
         mensajePasajeros=findViewById(R.id.mensaje);
@@ -396,6 +436,112 @@ public class MapsFuncDriver extends FragmentActivity implements OnMapReadyCallba
                 alertaPasajero.setVisibility(View.GONE);
             }
         });
+
+
+        if (servicio_ejecutivo.equals("si")){
+            switchEjecutivo.setChecked(true);
+            tvSwitch1.setText("Activo");
+        }
+        else{
+            switchEjecutivo.setChecked(false);
+            tvSwitch1.setText("Inactivo");
+
+        }
+
+        if (servicio_usuarios.equals("si")){
+            switchUsuario.setChecked(true);
+            tvSwitch2.setText("Activo");
+        }
+        else{
+            switchUsuario.setChecked(false);
+            tvSwitch2.setText("Inactivo");
+        }
+
+        switchEjecutivo.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked){
+                    editorConductor.putString("servicio_ejecutivo","si");
+                    editorConductor.apply();
+                    estado_cambio="si";
+                    tvSwitch1.setText("Activo");
+                }
+                else{
+                    editorConductor.putString("servicio_ejecutivo","no");
+                    editorConductor.apply();
+                    estado_cambio="no";
+                    tvSwitch1.setText("Inactivo");
+                }
+                tipo_cambio = "ejecutivo";
+                segundoPlanoCambiarEstado=new SegundoPlanoCambiarEstado();
+                segundoPlanoCambiarEstado.execute();
+            }
+        });
+
+        switchUsuario.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked){
+                    editorConductor.putString("servicio_usuarios","si");
+                    editorConductor.apply();
+                    estado_cambio="si";
+                    tvSwitch2.setText("Activo");
+                }
+                else{
+                    editorConductor.putString("servicio_usuarios","no");
+                    editorConductor.apply();
+                    estado_cambio="no";
+                    tvSwitch2.setText("Inactivo");
+                }
+                tipo_cambio = "usuario";
+                segundoPlanoCambiarEstado=new SegundoPlanoCambiarEstado();
+                segundoPlanoCambiarEstado.execute();
+            }
+        });
+
+        btnAceptarViajeUsuario.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent conductor=new Intent(MapsFuncDriver.this,ViajeUsuario.class);
+                startActivity(conductor);
+                editorViaje.putString("estado","aceptado");
+                editorViaje.apply();
+            }
+        });
+
+        btnRechazarViajeUsuario.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+
+        puntoPartidaUsuario.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String uri = "geo:"+latInicio+","+lngInicio+" ?q= "+latFinal+","+lngFinal;
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(uri)));
+
+                //Intent intent = new Intent(android.content.Intent.ACTION_VIEW,
+                  //      Uri.parse("http://maps.google.com/maps?saddr="+latInicio+","+lngInicio+"&daddr="+latFinal+","+lngFinal));
+                //startActivity(intent);
+            }
+        });
+
+        puntoLlegadaUsuario.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                String uri = "geo:"+latInicio+","+lngInicio+" ?q= "+latFinal+","+lngFinal;
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(uri)));
+                //Intent intent = new Intent(android.content.Intent.ACTION_VIEW,
+                  //      Uri.parse("http://maps.google.com/maps?saddr="+latInicio+","+lngInicio+"&daddr="+latFinal+","+lngFinal));
+                //startActivity(intent);
+            }
+        });
+
+        segundoPlanoSetearPreferencias=new SegundoPlanoSetearPreferencias();
+        segundoPlanoSetearPreferencias.execute();
     }
 
     /**
@@ -408,36 +554,28 @@ public class MapsFuncDriver extends FragmentActivity implements OnMapReadyCallba
         // Add a marker in Sydney and move the camera
         checarPermisos();
         miLatLong();
-
-        LatLng enfermeraLL = new LatLng(latLong.latitude-0.0021,latLong.longitude);
-        Marker marcadorEnfermera = mMap.addMarker(new MarkerOptions()
-                .position(enfermeraLL)
-                .icon(BitmapDescriptorFactory.fromBitmap(resizeBitmap("ubicacion_cov", 70, 70))));
-
-        LatLng enfermeraLL2 = new LatLng(latLong.latitude-0.0031,latLong.longitude);
-        Marker marcadorEnfermera2 = mMap.addMarker(new MarkerOptions()
-                .position(enfermeraLL2)
-                .icon(BitmapDescriptorFactory.fromBitmap(resizeBitmap("ubicacion_cov", 70, 70))));
-
-        LatLng enfermeraLL3 = new LatLng(latLong.latitude-0.0031,latLong.longitude-0.0003);
-        Marker marcadorEnfermera3 = mMap.addMarker(new MarkerOptions()
-                .position(enfermeraLL3)
-                .icon(BitmapDescriptorFactory.fromBitmap(resizeBitmap("ubicacion_cov", 70, 70))));
-
-
-
-        marcadorEnfermera.setZIndex(0);
-        marcadorEnfermera2.setZIndex(0);
-        marcadorEnfermera3.setZIndex(0);
+        googleMap.getUiSettings().isMapToolbarEnabled();
 
         if (solicitud_viaje!=null){
-            portadaEspera.setVisibility(View.GONE);
-            capaSolicitud.setVisibility(View.VISIBLE);
-            //Toast.makeText(getApplicationContext(),"idViaje: "+solicitud_viaje,Toast.LENGTH_LONG).show();
-            segundoPlano = new SegundoPlano();
-            segundoPlano.execute();
-            segundoPlanoViajeId=new SegundoPlanoViajeId();
-            segundoPlanoViajeId.execute();
+            if (estado_viaje.equals("solicitado")){
+                portadaEspera.setVisibility(View.GONE);
+                capaSolicitud.setVisibility(View.VISIBLE);
+                //Toast.makeText(getApplicationContext(),"idViaje: "+solicitud_viaje,Toast.LENGTH_LONG).show();
+                segundoPlano = new SegundoPlano();
+                segundoPlano.execute();
+                segundoPlanoViajeId=new SegundoPlanoViajeId();
+                segundoPlanoViajeId.execute();
+            }
+            else {
+                portadaEspera.setVisibility(View.GONE);
+                capaSolicitudUsuario.setVisibility(View.VISIBLE);
+                //Toast.makeText(getApplicationContext(),"idViaje: "+solicitud_viaje,Toast.LENGTH_LONG).show();
+                segundoPlano = new SegundoPlano();
+                segundoPlano.execute();
+
+                segundoPlanoViajeIdUsuario=new SegundoPlanoViajeIdUsuario();
+                segundoPlanoViajeIdUsuario.execute();
+            }
         }
         else{
             id_viaje = datosViaje.getString("id"," ");
@@ -502,6 +640,15 @@ public class MapsFuncDriver extends FragmentActivity implements OnMapReadyCallba
                             startActivity(intent);
                         }
                     }
+                }
+
+                if (strEstado.equals("destino_usuario")){
+                    portadaEspera.setVisibility(View.GONE);
+                    capaSolicitud.setVisibility(View.GONE);
+                    capaDestino.setVisibility(View.GONE);
+                    capaViajeCurso.setVisibility(View.VISIBLE);
+
+                    String strLat=datosViaje.getString("lat_ini");
                 }
 
                 LatLng punto = new LatLng(Double.parseDouble(strLat),Double.parseDouble(strLong));
@@ -648,10 +795,9 @@ public class MapsFuncDriver extends FragmentActivity implements OnMapReadyCallba
         if (marker != null) marker.remove();
         marker = mMap.addMarker(new MarkerOptions()
                 .position(latLong)
-                .icon(BitmapDescriptorFactory.fromBitmap(resizeBitmap("globo_1", 90, 90))));
+                .icon(BitmapDescriptorFactory.fromBitmap(resizeBitmap("icono_conductor", 70, 70))));
         CameraUpdate miUbicacion = CameraUpdateFactory.newLatLngZoom(latLong, 18);
         mMap.animateCamera(miUbicacion);
-
 
 
         marker.setZIndex(0);
@@ -673,6 +819,7 @@ public class MapsFuncDriver extends FragmentActivity implements OnMapReadyCallba
         }
         return fullDireccion;
     }
+
 
     private class SegundoPlano extends AsyncTask<Void, Integer, Void> {
         @Override
@@ -807,8 +954,6 @@ public class MapsFuncDriver extends FragmentActivity implements OnMapReadyCallba
                                     .icon(BitmapDescriptorFactory.fromBitmap(resizeBitmap("icono_ubicacion", 70, 70))));
                             CameraUpdate lugarInicio = CameraUpdateFactory.newLatLngZoom(punto, 18);
                             mMap.animateCamera(lugarInicio);
-
-
 
                         } catch (JSONException e) {
                             Log.e("errorRespuesta", String.valueOf(e));
@@ -970,6 +1115,123 @@ public class MapsFuncDriver extends FragmentActivity implements OnMapReadyCallba
         requestQueue.add(request);
     }
 
+    private class SegundoPlanoCambiarEstado extends AsyncTask<Void, Integer, Void> {
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            cambiarEstado();
+            return null;
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+        }
+
+        @Override
+        protected void onCancelled() {
+            super.onCancelled();
+        }
+    }
+
+    public void cambiarEstado()
+    {
+        RequestQueue requestQueue= Volley.newRequestQueue(this);
+        StringRequest request = new StringRequest(Request.Method.POST,  SERVIDOR_CONTROLADOR+"cambiar_estado.php",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.e("RastreoRes",response);
+                    }
+                }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+            }
+        }){
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+
+                HashMap<String,String> map = new HashMap<>();
+                map.put("android_id",android_id);
+                map.put("id_sesion",id_sesion);
+                map.put("tipo", tipo_cambio);
+                map.put("estado", estado_cambio);
+                return map;
+            }
+        };
+        requestQueue.add(request);
+    }
+
+    private class SegundoPlanoSetearPreferencias extends AsyncTask<Void, Integer, Void> {
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            Log.e("setear","paso");
+            setearPreferencias();
+            return null;
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+        }
+
+        @Override
+        protected void onCancelled() {
+            super.onCancelled();
+        }
+    }
+
+    public void setearPreferencias()
+    {
+        RequestQueue requestQueue= Volley.newRequestQueue(this);
+        StringRequest request = new StringRequest(Request.Method.POST,  SERVIDOR_CONTROLADOR+"setear_preferencias.php",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.e("setearres",response);
+                    }
+                }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+            }
+        }){
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+
+                HashMap<String,String> map = new HashMap<>();
+                map.put("android_id",android_id);
+                map.put("id_sesion",id_sesion);
+                map.put("servicio_ejecutivo", servicio_ejecutivo);
+                map.put("servicio_usuarios", servicio_usuarios);
+                return map;
+            }
+        };
+        requestQueue.add(request);
+    }
+
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {
             case PERMISO_LOCATION : {
@@ -993,5 +1255,141 @@ public class MapsFuncDriver extends FragmentActivity implements OnMapReadyCallba
     public Bitmap resizeBitmap(String drawableName, int width, int height) {
         Bitmap imageBitmap = BitmapFactory.decodeResource(getResources(), getResources().getIdentifier(drawableName, "drawable", getPackageName()));
         return Bitmap.createScaledBitmap(imageBitmap, width, height, false);
+    }
+
+
+    private class SegundoPlanoViajeIdUsuario extends AsyncTask<Void, Integer, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            enviarIdViajeUsuario();
+            return null;
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+        }
+
+        @Override
+        protected void onCancelled() {
+            super.onCancelled();
+        }
+
+    }
+
+    public void enviarIdViajeUsuario()
+    {
+        RequestQueue requestQueue= Volley.newRequestQueue(this);
+        StringRequest request = new StringRequest(Request.Method.POST,  SERVIDOR_CONTROLADOR+"pedir_datos_viaje_usuario.php",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.e("ResPedirUsuario",response);
+                        String limpio=response.replace("\\","");
+                        Log.e("ResPedirLimpio",limpio);
+                        try {
+                            JSONObject jsonObject = new JSONObject(limpio);
+                            String strId = jsonObject.getString("id");
+                            String strIdUsuario = jsonObject.getString("id_usuario");
+                            String strTipoViaje = jsonObject.getString("tipo_viaje");
+                            String strLatInicio = jsonObject.getString("lat_inicio");
+                            String strLngInicio = jsonObject.getString("lng_inicio");
+                            String strLatFinal = jsonObject.getString("lat_final");
+                            String strLngFinal = jsonObject.getString("lng_final");
+                            String strCosto = jsonObject.getString("costo");
+
+                            //Log.e("ResNombres",strNombres);
+
+                            editorViaje.putString("id",strId);
+                            editorViaje.putString("id_usuario",strIdUsuario);
+                            editorViaje.putString("tipo_viaje",strTipoViaje);
+                            editorViaje.putString("lat_inicio",strLatInicio);
+                            editorViaje.putString("lng_inicio",strLngInicio);
+                            editorViaje.putString("lat_final",strLatFinal);
+                            editorViaje.putString("lng_final",strLngFinal);
+                            editorViaje.putString("costo",strCosto);
+                            editorViaje.putString("estado","solicitado_usuario");
+                            editorViaje.apply();
+
+                            if (strTipoViaje.trim().equals("1")){
+                                strTipoViaje="Normal";
+                                imgViaje.setImageResource(R.drawable.taxi_normal);
+                            }
+
+                            if (strTipoViaje.trim().equals("2")){
+                                strTipoViaje="Mujeres";
+                                imgViaje.setImageResource(R.drawable.taxi_mujer);
+                            }
+
+                            if (strTipoViaje.trim().equals("3")){
+                                strTipoViaje="Mascotas";
+                                imgViaje.setImageResource(R.drawable.taxi_mascota);
+                            }
+
+                            if (strTipoViaje.trim().equals("4")){
+                                strTipoViaje="Paquetería";
+                                imgViaje.setImageResource(R.drawable.taxi_entrega);
+                            }
+
+                            latInicio= Float.parseFloat(strLatInicio);
+                            lngInicio= Float.parseFloat(strLngInicio);
+                            String strPartida=darDireccion(getApplicationContext(),latInicio,lngInicio);
+
+                            latFinal= Float.parseFloat(strLatFinal);
+                            lngFinal= Float.parseFloat(strLngFinal);
+                            String strLlegada=darDireccion(getApplicationContext(),latFinal,lngFinal);
+
+                            puntoPartidaUsuario .setText(strPartida);
+                            puntoLlegadaUsuario.setText(strLlegada);
+                            costoTipoUsuario.setText(strTipoViaje+" / $"+strCosto);
+
+                            /*LatLng punto = new LatLng(Double.parseDouble(strLat),Double.parseDouble(strLong));
+                            mMap.addMarker(new MarkerOptions()
+                                    .position(punto)
+                                    .icon(BitmapDescriptorFactory.fromBitmap(resizeBitmap("icono_ubicacion", 70, 70))));
+                            CameraUpdate lugarInicio = CameraUpdateFactory.newLatLngZoom(punto, 18);
+                            mMap.animateCamera(lugarInicio);*/
+
+
+
+                        } catch (JSONException e) {
+                            Log.e("errorRespuesta", String.valueOf(e));
+                        }
+                    }
+                }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+            }
+        }){
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                HashMap<String,String> map = new HashMap<>();
+                map.put("android_id",android_id);
+                map.put("id_sesion",id_sesion);
+                map.put("id_viaje", solicitud_viaje);
+
+                return map;
+            }
+        };
+        requestQueue.add(request);
+    }
+
+
+    @Override
+    public void onBackPressed() {
+
     }
 }
